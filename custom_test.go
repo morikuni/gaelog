@@ -1,0 +1,99 @@
+package gaelog
+
+import (
+	"io/ioutil"
+	"path/filepath"
+	"testing"
+	"time"
+
+	"github.com/stretchr/testify/assert"
+)
+
+func run(t *testing.T, name string, f func(t *testing.T, l *CustomLogger)) {
+	t.Run(name, func(t *testing.T) {
+		l := &CustomLogger{
+			Dir: "log",
+			OnUnexpectedError: func(err error) {
+				t.Fatal(err)
+			},
+			RotationStrategy: NeverRotate{},
+		}
+		defer CleanUp(l, CleanUpAll{})
+		defer l.Close()
+
+		f(t, l)
+	})
+}
+
+func TestCustomLogger(t *testing.T) {
+	run(t, "Criticalf", func(t *testing.T, l *CustomLogger) {
+		l.Criticalf(nil, "critical: %d", 1)
+		r, err := ioutil.ReadFile(l.file.Name())
+		assert.NoError(t, err)
+		assert.Contains(t, string(r), "CRITICAL")
+		assert.Contains(t, string(r), "critical: 1")
+	})
+
+	run(t, "Errorf", func(t *testing.T, l *CustomLogger) {
+		l.Errorf(nil, "error: %d", 2)
+		r, err := ioutil.ReadFile(l.file.Name())
+		assert.NoError(t, err)
+		assert.Contains(t, string(r), "ERROR")
+		assert.Contains(t, string(r), "error: 2")
+	})
+
+	run(t, "Warningf", func(t *testing.T, l *CustomLogger) {
+		l.Warningf(nil, "warning: %d", 3)
+		r, err := ioutil.ReadFile(l.file.Name())
+		assert.NoError(t, err)
+		assert.Contains(t, string(r), "WARNING")
+		assert.Contains(t, string(r), "warning: 3")
+	})
+
+	run(t, "Infof", func(t *testing.T, l *CustomLogger) {
+		l.Infof(nil, "info: %d", 4)
+		r, err := ioutil.ReadFile(l.file.Name())
+		assert.NoError(t, err)
+		assert.Contains(t, string(r), "INFO")
+		assert.Contains(t, string(r), "info: 4")
+	})
+
+	run(t, "Debugf", func(t *testing.T, l *CustomLogger) {
+		l.Debugf(nil, "debug: %d", 5)
+		r, err := ioutil.ReadFile(l.file.Name())
+		assert.NoError(t, err)
+		assert.Contains(t, string(r), "DEBUG")
+		assert.Contains(t, string(r), "debug: 5")
+	})
+
+	run(t, "RemovableFile", func(t *testing.T, l *CustomLogger) {
+		l.RotationStrategy = TimeBaseRotation{time.Second}
+		l.Debugf(nil, "hello world")
+		assert.Len(t, l.RemovableFiles(), 0)
+		name := filepath.Base(l.file.Name())
+
+		time.Sleep(time.Second)
+		l.Debugf(nil, "hello world") // rotate by this log
+		rfs := l.RemovableFiles()
+		if assert.Len(t, rfs, 1) {
+			assert.Equal(t, l.Dir, rfs[0].Dir)
+			assert.Equal(t, name, rfs[0].Name)
+		}
+	})
+}
+
+func BenchmarkCustomLogger(b *testing.B) {
+	l := &CustomLogger{
+		Dir: "log",
+		OnUnexpectedError: func(err error) {
+			b.Fatal(err)
+		},
+		RotationStrategy: NeverRotate{},
+	}
+	defer CleanUp(l, CleanUpAll{})
+	defer l.Close()
+
+	for i := 0; i < b.N; i++ {
+		l.Errorf(nil, "aaa")
+	}
+}
