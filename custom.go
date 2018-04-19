@@ -75,9 +75,6 @@ func (l *CustomLogger) recoverError(err error) {
 }
 
 func (l *CustomLogger) log(level string, format string, args ...interface{}) {
-	l.init()
-	l.tryRotate()
-
 	msg := fmt.Sprintf(format, args...)
 	now := time.Now()
 	payload := logPayload{
@@ -94,6 +91,9 @@ func (l *CustomLogger) log(level string, format string, args ...interface{}) {
 
 	l.mu.Lock()
 	defer l.mu.Unlock()
+	l.init()
+	l.tryRotate()
+
 	if err := json.NewEncoder(l.file).Encode(&payload); err != nil {
 		l.recoverError(err)
 	}
@@ -186,8 +186,6 @@ func (l *CustomLogger) rotate() error {
 		return err
 	}
 
-	l.mu.Lock()
-	defer l.mu.Unlock()
 	l.close()
 	l.file = f
 	l.createdAt = now
