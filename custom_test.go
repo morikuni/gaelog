@@ -12,7 +12,7 @@ import (
 func runCustom(t *testing.T, name string, f func(t *testing.T, l *CustomLogger)) {
 	t.Run(name, func(t *testing.T) {
 		l := &CustomLogger{
-			Dir: "log",
+			Dir: "test",
 			OnUnexpectedError: func(err error) {
 				t.Fatal(err)
 			},
