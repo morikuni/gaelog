@@ -32,6 +32,7 @@
   revision = "d41e8174641f662c5a2d1c7a5f9e828788eb8706"
 
 [[projects]]
+  branch = "master"
   name = "google.golang.org/appengine"
   packages = [
     ".",
@@ -47,12 +48,11 @@
     "log",
     "user"
   ]
-  revision = "150dc57a1b433e64154302bdc40b6bb8aefa313a"
-  version = "v1.0.0"
+  revision = "0a24098c0ec68416ec050f567f75df563d6b231e"
 
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "a93fd20d066b61dc80a5b712ae4fe9fb78903f6011635567152125ba9c18a35f"
+  inputs-digest = "80a8519101b765fbaa2df9bc8f4a936d9a61a644e1ebcda2c1cc8c4f32686bc7"
   solver-name = "gps-cdcl"
   solver-version = 1
