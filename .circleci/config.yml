@@ -1,6 +1,6 @@
 defaults: &defaults
   docker:
-    - image: mercari/appengine-go:latest
+    - image: mercari/appengine-go:slim
   working_directory: /go/src/github.com/morikuni/gaelog
 
 version: 2
