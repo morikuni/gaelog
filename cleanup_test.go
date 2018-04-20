@@ -93,7 +93,7 @@ func TestCleanupStrategy(t *testing.T) {
 }
 
 func TestScheduleCleanup(t *testing.T) {
-	run(t, "success", func(t *testing.T, l *CustomLogger) {
+	runCustom(t, "success", func(t *testing.T, l *CustomLogger) {
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
 		go ScheduleCleanup(ctx, 2*time.Second, l, CleanUpAll{})
