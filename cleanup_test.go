@@ -1,6 +1,7 @@
 package gaelog
 
 import (
+	"context"
 	"fmt"
 	"testing"
 	"time"
@@ -89,4 +90,22 @@ func TestCleanupStrategy(t *testing.T) {
 			assert.Len(t, result, len(fis))
 		})
 	}
+}
+
+func TestScheduleCleanup(t *testing.T) {
+	run(t, "success", func(t *testing.T, l *CustomLogger) {
+		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
+		go ScheduleCleanup(ctx, 2*time.Second, l, CleanUpAll{})
+		l.rotate()
+		time.Sleep(time.Second)
+		l.rotate()
+		assert.Len(t, l.RemovableFiles(), 1)
+		time.Sleep(2 * time.Second)
+		assert.Len(t, l.RemovableFiles(), 0)
+		l.rotate()
+		assert.Len(t, l.RemovableFiles(), 1)
+		time.Sleep(2 * time.Second)
+		assert.Len(t, l.RemovableFiles(), 0)
+	})
 }
