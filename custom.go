@@ -12,12 +12,14 @@ import (
 	"time"
 )
 
+type LogLevel string
+
 const (
-	levelCritical = "CRITICAL"
-	levelError    = "ERROR"
-	levelWarning  = "WARNING"
-	levelInfo     = "INFO"
-	levelDebug    = "DEBUG"
+	Critical LogLevel = "CRITICAL"
+	Error    LogLevel = "ERROR"
+	Warning  LogLevel = "WARNING"
+	Info     LogLevel = "INFO"
+	Debug    LogLevel = "DEBUG"
 
 	timeFormat = "20060102150405"
 )
@@ -44,28 +46,28 @@ type CustomLogger struct {
 }
 
 // Criticalf puts a log with critical level.
-func (l *CustomLogger) Criticalf(_ context.Context, format string, args ...interface{}) {
-	l.log(levelCritical, format, args...)
+func (l *CustomLogger) Criticalf(ctx context.Context, format string, args ...interface{}) {
+	l.Printf(ctx, Critical, format, args...)
 }
 
 // Errorf puts a log with error level.
-func (l *CustomLogger) Errorf(_ context.Context, format string, args ...interface{}) {
-	l.log(levelError, format, args...)
+func (l *CustomLogger) Errorf(ctx context.Context, format string, args ...interface{}) {
+	l.Printf(ctx, Error, format, args...)
 }
 
 // Warningf puts a log with warning level.
-func (l *CustomLogger) Warningf(_ context.Context, format string, args ...interface{}) {
-	l.log(levelWarning, format, args...)
+func (l *CustomLogger) Warningf(ctx context.Context, format string, args ...interface{}) {
+	l.Printf(ctx, Warning, format, args...)
 }
 
 // Infof puts a log with info level.
-func (l *CustomLogger) Infof(_ context.Context, format string, args ...interface{}) {
-	l.log(levelInfo, format, args...)
+func (l *CustomLogger) Infof(ctx context.Context, format string, args ...interface{}) {
+	l.Printf(ctx, Info, format, args...)
 }
 
 // Debugf puts a log with debug level.
-func (l *CustomLogger) Debugf(_ context.Context, format string, args ...interface{}) {
-	l.log(levelDebug, format, args...)
+func (l *CustomLogger) Debugf(ctx context.Context, format string, args ...interface{}) {
+	l.Printf(ctx, Debug, format, args...)
 }
 
 func (l *CustomLogger) recoverError(err error) {
@@ -74,7 +76,7 @@ func (l *CustomLogger) recoverError(err error) {
 	}
 }
 
-func (l *CustomLogger) log(level string, format string, args ...interface{}) {
+func (l *CustomLogger) Printf(_ context.Context, level LogLevel, format string, args ...interface{}) {
 	msg := fmt.Sprintf(format, args...)
 	now := time.Now()
 	payload := logPayload{
@@ -197,8 +199,8 @@ type logPayload struct {
 		Seconds int64 `json:"seconds"`
 		Nanos   int   `json:"nanos"`
 	} `json:"timestamp"`
-	Severity string `json:"severiry"`
-	Message  string `json:"message"`
+	Severity LogLevel `json:"severiry"`
+	Message  string   `json:"message"`
 }
 
 // FileInfo is a information of a log file.
