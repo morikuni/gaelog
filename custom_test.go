@@ -69,12 +69,12 @@ func TestCustomLogger(t *testing.T) {
 	runCustom(t, "RemovableFile", func(t *testing.T, l *CustomLogger) {
 		l.RotationStrategy = TimeBaseRotation{time.Second}
 		l.Debugf(nil, "hello world")
-		assert.Len(t, l.RemovableFiles(), 0)
+		assert.Len(t, l.removableFiles(), 0)
 		name := filepath.Base(l.file.Name())
 
 		time.Sleep(time.Second)
 		l.Debugf(nil, "hello world") // rotate by this log
-		rfs := l.RemovableFiles()
+		rfs := l.removableFiles()
 		if assert.Len(t, rfs, 1) {
 			assert.Equal(t, l.Dir, rfs[0].Dir)
 			assert.Equal(t, name, rfs[0].Name)

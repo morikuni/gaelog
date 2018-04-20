@@ -139,9 +139,9 @@ func (l *CustomLogger) close() {
 	l.createdAt = time.Time{}
 }
 
-// RemovableFiles returns information of the files that
+// removableFiles returns information of the files that
 // are no longer used by the logger.
-func (l *CustomLogger) RemovableFiles() []FileInfo {
+func (l *CustomLogger) removableFiles() []FileInfo {
 	files, err := ioutil.ReadDir(l.Dir)
 	if err != nil {
 		l.Errorf(context.Background(), "failed to read dir: %s: %s", l.Dir, err)

@@ -57,7 +57,7 @@ func ScheduleCleanup(ctx context.Context, interval time.Duration, logger *Custom
 
 // CleanUp cleans up the old log files of the logger based on the strategy.
 func CleanUp(logger *CustomLogger, strategy CleanupStrategy) {
-	fis, err := strategy.Apply(logger.RemovableFiles())
+	fis, err := strategy.Apply(logger.removableFiles())
 	if err != nil {
 		logger.Errorf(nil, "strategy error: %s", err)
 	}
