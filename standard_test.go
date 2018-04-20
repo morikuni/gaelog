@@ -8,9 +8,11 @@ import (
 )
 
 func TestStandardLogger(t *testing.T) {
-	ctx, close, err := aetest.NewContext()
+	i, err := aetest.NewInstance(&aetest.Options{SuppressDevAppServerLog: true})
+	defer i.Close()
+	req, err := i.NewRequest("", "", nil)
 	assert.NoError(t, err)
-	defer close()
+	ctx := req.Context()
 
 	l := StandardLogger{}
 
