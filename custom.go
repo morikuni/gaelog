@@ -12,17 +12,11 @@ import (
 	"time"
 )
 
-type LogLevel string
+const timeFormat = "20060102150405"
 
-const (
-	Critical LogLevel = "CRITICAL"
-	Error    LogLevel = "ERROR"
-	Warning  LogLevel = "WARNING"
-	Info     LogLevel = "INFO"
-	Debug    LogLevel = "DEBUG"
-
-	timeFormat = "20060102150405"
-)
+var _ interface {
+	Logger
+} = &CustomLogger{}
 
 // CustomLogger is a logger for the custom runtime on flex environment.
 // The logs are written into a file dir/app*.log.
@@ -45,37 +39,32 @@ type CustomLogger struct {
 	createdAt time.Time
 }
 
-// Criticalf puts a log with critical level.
+// Criticalf implements Logger.
 func (l *CustomLogger) Criticalf(ctx context.Context, format string, args ...interface{}) {
 	l.Printf(ctx, Critical, format, args...)
 }
 
-// Errorf puts a log with error level.
+// Errorf implements Logger.
 func (l *CustomLogger) Errorf(ctx context.Context, format string, args ...interface{}) {
 	l.Printf(ctx, Error, format, args...)
 }
 
-// Warningf puts a log with warning level.
+// Warningf implements Logger.
 func (l *CustomLogger) Warningf(ctx context.Context, format string, args ...interface{}) {
 	l.Printf(ctx, Warning, format, args...)
 }
 
-// Infof puts a log with info level.
+// Infof implements Logger.
 func (l *CustomLogger) Infof(ctx context.Context, format string, args ...interface{}) {
 	l.Printf(ctx, Info, format, args...)
 }
 
-// Debugf puts a log with debug level.
+// Debugf implements Logger.
 func (l *CustomLogger) Debugf(ctx context.Context, format string, args ...interface{}) {
 	l.Printf(ctx, Debug, format, args...)
 }
 
-func (l *CustomLogger) recoverError(err error) {
-	if l.OnUnexpectedError != nil {
-		l.OnUnexpectedError(err)
-	}
-}
-
+// Printf implements Logger.
 func (l *CustomLogger) Printf(_ context.Context, level LogLevel, format string, args ...interface{}) {
 	msg := fmt.Sprintf(format, args...)
 	now := time.Now()
@@ -98,6 +87,12 @@ func (l *CustomLogger) Printf(_ context.Context, level LogLevel, format string, 
 
 	if err := json.NewEncoder(l.file).Encode(&payload); err != nil {
 		l.recoverError(err)
+	}
+}
+
+func (l *CustomLogger) recoverError(err error) {
+	if l.OnUnexpectedError != nil {
+		l.OnUnexpectedError(err)
 	}
 }
 
