@@ -119,7 +119,7 @@ func (l *CustomLogger) init() {
 			}
 		}
 		if l.RotationStrategy == nil {
-			l.RotationStrategy = NeverRotate{}
+			l.RotationStrategy = TimeBaseRotation{24 * time.Hour}
 		}
 	})
 }
