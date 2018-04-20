@@ -6,7 +6,7 @@ import (
 	"google.golang.org/appengine/log"
 )
 
-// CustomLogger is a logger for the standard environment.
+// StandardLogger is a logger for the standard environment.
 type StandardLogger struct{}
 
 // Criticalf implements Logger.
