@@ -14,7 +14,7 @@ func TestCleanupStrategy(t *testing.T) {
 		Times []time.Time
 	}
 	type Expect struct {
-		LeaveLatest int
+		KeepLatest int
 	}
 	type Test struct {
 		Input  Input
@@ -73,7 +73,7 @@ func TestCleanupStrategy(t *testing.T) {
 
 	for i, test := range tests {
 		t.Run(fmt.Sprint(i), func(t *testing.T) {
-			ll := LeaveLatest{latest}
+			ll := KeepLatest{latest}
 			ca := CleanUpAll{}
 
 			var fis []FileInfo
@@ -83,7 +83,7 @@ func TestCleanupStrategy(t *testing.T) {
 
 			result, err := ll.Apply(fis)
 			assert.NoError(t, err)
-			assert.Len(t, result, test.Expect.LeaveLatest)
+			assert.Len(t, result, test.Expect.KeepLatest)
 
 			result, err = ca.Apply(fis)
 			assert.NoError(t, err)

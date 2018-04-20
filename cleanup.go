@@ -12,16 +12,16 @@ type CleanupStrategy interface {
 	Apply(fis []FileInfo) ([]FileInfo, error)
 }
 
-// LeaveLatest is a strategy that cleans up the files based on
+// KeepLatest is a strategy that cleans up the files based on
 // the created time.
-type LeaveLatest struct {
+type KeepLatest struct {
 	// Latest is a threshold. The files created before this duration
 	// are removed.
 	Latest time.Duration
 }
 
 // Apply implements CleanupStrategy.
-func (s LeaveLatest) Apply(fis []FileInfo) ([]FileInfo, error) {
+func (s KeepLatest) Apply(fis []FileInfo) ([]FileInfo, error) {
 	now := time.Now()
 	result := make([]FileInfo, 0, len(fis))
 	for _, fi := range fis {
