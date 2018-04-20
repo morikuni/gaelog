@@ -164,7 +164,7 @@ func (l *CustomLogger) RemovableFiles() []FileInfo {
 		if len(ms) == 0 {
 			continue
 		}
-		t, err := time.ParseInLocation(timeFormat, ms[1], time.Local)
+		t, err := time.ParseInLocation(timeFormat, ms[1], time.UTC)
 		if err != nil {
 			l.Errorf(context.Background(), "unexpected file name: %s", file.Name())
 			return nil
@@ -182,7 +182,7 @@ func (l *CustomLogger) RemovableFiles() []FileInfo {
 
 func (l *CustomLogger) rotate() error {
 	now := time.Now()
-	path := filepath.Join(l.Dir, fmt.Sprintf("app_%s.log", now.In(time.Local).Format(timeFormat)))
+	path := filepath.Join(l.Dir, fmt.Sprintf("app_%s.log", now.In(time.UTC).Format(timeFormat)))
 	f, err := os.OpenFile(path, os.O_RDWR|os.O_APPEND|os.O_CREATE, 0666)
 	if err != nil {
 		return err
