@@ -199,7 +199,7 @@ type logPayload struct {
 		Seconds int64 `json:"seconds"`
 		Nanos   int   `json:"nanos"`
 	} `json:"timestamp"`
-	Severity LogLevel `json:"severiry"`
+	Severity LogLevel `json:"severity"`
 	Message  string   `json:"message"`
 }
 
