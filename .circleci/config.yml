@@ -1,6 +1,6 @@
 defaults: &defaults
   docker:
-    - image: circleci/golang:latest
+    - image: mercari/appengine-go:latest
   working_directory: /go/src/github.com/morikuni/gaelog
 
 version: 2
