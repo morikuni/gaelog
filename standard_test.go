@@ -15,7 +15,7 @@ func TestStandardLogger(t *testing.T) {
 	assert.NoError(t, err)
 	ctx := req.Context()
 
-	l := StandardLogger{}
+	l := NewStandardLogger()
 
 	l.Criticalf(ctx, "aaa")
 	l.Errorf(ctx, "aaa")

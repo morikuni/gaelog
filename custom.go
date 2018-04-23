@@ -32,7 +32,7 @@ type CustomLogger struct {
 	createdAt time.Time
 }
 
-// NewCustomLogger create a new logger with given options.
+// NewCustomLogger create a new logger for custom runtime with given options.
 func NewCustomLogger(opts ...CustomLoggerOption) *CustomLogger {
 	l := &CustomLogger{
 		dir:               "/var/log/app_engine/",

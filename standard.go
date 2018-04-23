@@ -9,13 +9,22 @@ import (
 // StandardLogger is a logger for the standard environment.
 type StandardLogger struct{}
 
+var _ interface {
+	Logger
+} = &StandardLogger{}
+
+// NewStandardLogger creates a new logger for standard environment.
+func NewStandardLogger() *StandardLogger {
+	return &StandardLogger{}
+}
+
 // Criticalf implements Logger.
-func (l StandardLogger) Criticalf(ctx context.Context, format string, args ...interface{}) {
+func (l *StandardLogger) Criticalf(ctx context.Context, format string, args ...interface{}) {
 	l.Printf(ctx, Critical, format, args...)
 }
 
 // Errorf implements Logger.
-func (l StandardLogger) Errorf(ctx context.Context, format string, args ...interface{}) {
+func (l *StandardLogger) Errorf(ctx context.Context, format string, args ...interface{}) {
 	l.Printf(ctx, Error, format, args...)
 }
 
@@ -35,7 +44,7 @@ func (l *StandardLogger) Debugf(ctx context.Context, format string, args ...inte
 }
 
 // Printf implements Logger.
-func (l StandardLogger) Printf(ctx context.Context, level LogLevel, format string, args ...interface{}) {
+func (l *StandardLogger) Printf(ctx context.Context, level LogLevel, format string, args ...interface{}) {
 	switch level {
 	case Critical:
 		log.Criticalf(ctx, format, args...)
