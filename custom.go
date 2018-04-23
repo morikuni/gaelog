@@ -87,6 +87,7 @@ func (l *CustomLogger) Printf(_ context.Context, level LogLevel, format string, 
 
 	if err := json.NewEncoder(l.file).Encode(&payload); err != nil {
 		l.recoverError(err)
+		return
 	}
 }
 
@@ -100,10 +101,12 @@ func (l *CustomLogger) tryRotate() {
 	stat, err := l.file.Stat()
 	if err != nil {
 		l.recoverError(err)
+		return
 	}
 	if l.RotationStrategy.ShouldRotate(FileInfo{l.Dir, stat.Name(), stat.Size(), stat.ModTime(), l.createdAt}) {
 		if err := l.rotate(); err != nil {
 			l.recoverError(err)
+			return
 		}
 	}
 }
@@ -113,13 +116,14 @@ func (l *CustomLogger) init() {
 		if l.Dir == "" {
 			l.Dir = "/var/log/app_engine/"
 		}
+		if l.RotationStrategy == nil {
+			l.RotationStrategy = TimeBaseRotation{24 * time.Hour}
+		}
 		if l.file == nil {
 			if err := l.rotate(); err != nil {
 				l.recoverError(err)
+				return
 			}
-		}
-		if l.RotationStrategy == nil {
-			l.RotationStrategy = TimeBaseRotation{24 * time.Hour}
 		}
 	})
 }
