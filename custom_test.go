@@ -1,6 +1,7 @@
 package gaelog
 
 import (
+	"context"
 	"io/ioutil"
 	"path/filepath"
 	"testing"
@@ -94,6 +95,6 @@ func BenchmarkCustomLogger(b *testing.B) {
 	defer l.Close()
 
 	for i := 0; i < b.N; i++ {
-		l.Errorf(nil, "aaa")
+		l.Errorf(context.Background(), "aaa")
 	}
 }
