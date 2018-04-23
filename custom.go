@@ -107,12 +107,12 @@ func (l *CustomLogger) Printf(_ context.Context, level LogLevel, format string, 
 	defer l.mu.Unlock()
 
 	if err := l.tryRotate(); err != nil {
-		l.recoverError(err, level, format, args)
+		l.recoverError(err, level, format, args...)
 		return
 	}
 
 	if err := json.NewEncoder(l.file).Encode(&payload); err != nil {
-		l.recoverError(err, level, format, args)
+		l.recoverError(err, level, format, args...)
 		return
 	}
 }
