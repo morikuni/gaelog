@@ -11,13 +11,13 @@ import (
 
 func runCustom(t *testing.T, name string, f func(t *testing.T, l *CustomLogger)) {
 	t.Run(name, func(t *testing.T) {
-		l := &CustomLogger{
-			Dir: "test",
-			OnUnexpectedError: func(err error, l LogLevel, f string, args ...interface{}) {
+		l := NewCustomLogger(
+			OutputTo("test"),
+			OnUnexpectedError(func(err error, l LogLevel, f string, args ...interface{}) {
 				t.Fatal(err, l, f, args)
-			},
-			RotationStrategy: NeverRotate{},
-		}
+			}),
+			RotatedBy(NeverRotate{}),
+		)
 		defer CleanUp(l, CleanUpAll{})
 		defer l.Close()
 
@@ -67,7 +67,7 @@ func TestCustomLogger(t *testing.T) {
 	})
 
 	runCustom(t, "RemovableFile", func(t *testing.T, l *CustomLogger) {
-		l.RotationStrategy = TimeBaseRotation{time.Second}
+		l.rotationStrategy = TimeBaseRotation{time.Second}
 		l.Debugf(nil, "hello world")
 		assert.Len(t, l.removableFiles(), 0)
 		name := filepath.Base(l.file.Name())
@@ -76,20 +76,20 @@ func TestCustomLogger(t *testing.T) {
 		l.Debugf(nil, "hello world") // rotate by this log
 		rfs := l.removableFiles()
 		if assert.Len(t, rfs, 1) {
-			assert.Equal(t, l.Dir, rfs[0].Dir)
+			assert.Equal(t, l.dir, rfs[0].Dir)
 			assert.Equal(t, name, rfs[0].Name)
 		}
 	})
 }
 
 func BenchmarkCustomLogger(b *testing.B) {
-	l := &CustomLogger{
-		Dir: "log",
-		OnUnexpectedError: func(err error, l LogLevel, f string, args ...interface{}) {
+	l := NewCustomLogger(
+		OutputTo("test"),
+		OnUnexpectedError(func(err error, l LogLevel, f string, args ...interface{}) {
 			b.Fatal(err, l, f, args)
-		},
-		RotationStrategy: NeverRotate{},
-	}
+		}),
+		RotatedBy(NeverRotate{}),
+	)
 	defer CleanUp(l, CleanUpAll{})
 	defer l.Close()
 

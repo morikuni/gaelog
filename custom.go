@@ -23,20 +23,43 @@ var _ interface {
 // These logs are collected by the fluentd running in another container
 // on the GCE instance.
 type CustomLogger struct {
-	// Dir is a directory which the log files are created.
-	Dir string
+	dir               string
+	onUnexpectedError func(err error, level LogLevel, message string, args ...interface{})
+	rotationStrategy  RotationStrategy
 
-	// OnUnexpectedError is called when a logger cannot put the logs by some reason.
-	OnUnexpectedError func(err error, level LogLevel, message string, args ...interface{})
-
-	// RotationStrategy is used to check whether logger should rotate
-	// the log file.
-	RotationStrategy RotationStrategy
-
-	once      sync.Once
 	mu        sync.Mutex
 	file      *os.File
 	createdAt time.Time
+}
+
+// NewCustomLogger create a new logger with given options.
+func NewCustomLogger(opts ...CustomLoggerOption) *CustomLogger {
+	l := &CustomLogger{
+		dir:               "/var/log/app_engine/",
+		onUnexpectedError: handleError,
+		rotationStrategy:  TimeBaseRotation{24 * time.Hour},
+	}
+
+	for _, o := range opts {
+		o(l)
+	}
+
+	return l
+}
+
+func handleError(err error, level LogLevel, message string, args ...interface{}) {
+	const format = "unexpected error: %s: %s: %s: %v\n"
+
+	fmt.Fprintf(os.Stderr, format, err, level, message, args)
+
+	f, err := os.OpenFile("error.log", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "failed to open error.log: %s", err)
+		return
+	}
+	defer f.Close()
+
+	fmt.Fprintf(f, format, err, level, message, args)
 }
 
 // Criticalf implements Logger.
@@ -82,7 +105,6 @@ func (l *CustomLogger) Printf(_ context.Context, level LogLevel, format string, 
 
 	l.mu.Lock()
 	defer l.mu.Unlock()
-	l.init()
 
 	if err := l.tryRotate(); err != nil {
 		l.recoverError(err, level, format, args)
@@ -96,8 +118,8 @@ func (l *CustomLogger) Printf(_ context.Context, level LogLevel, format string, 
 }
 
 func (l *CustomLogger) recoverError(err error, level LogLevel, format string, args ...interface{}) {
-	if l.OnUnexpectedError != nil {
-		l.OnUnexpectedError(err, level, format, args...)
+	if l.onUnexpectedError != nil {
+		l.onUnexpectedError(err, level, format, args...)
 	}
 }
 
@@ -107,7 +129,7 @@ func (l *CustomLogger) tryRotate() error {
 		if err != nil {
 			return err
 		}
-		if l.RotationStrategy.ShouldRotate(FileInfo{l.Dir, stat.Name(), stat.Size(), stat.ModTime(), l.createdAt}) {
+		if l.rotationStrategy.ShouldRotate(FileInfo{l.dir, stat.Name(), stat.Size(), stat.ModTime(), l.createdAt}) {
 			if err := l.rotate(); err != nil {
 				return err
 			}
@@ -118,17 +140,6 @@ func (l *CustomLogger) tryRotate() error {
 		}
 	}
 	return nil
-}
-
-func (l *CustomLogger) init() {
-	l.once.Do(func() {
-		if l.Dir == "" {
-			l.Dir = "/var/log/app_engine/"
-		}
-		if l.RotationStrategy == nil {
-			l.RotationStrategy = TimeBaseRotation{24 * time.Hour}
-		}
-	})
 }
 
 // Close closes a current log file.
@@ -149,9 +160,9 @@ func (l *CustomLogger) close() {
 // removableFiles returns information of the files that
 // are no longer used by the logger.
 func (l *CustomLogger) removableFiles() []FileInfo {
-	files, err := ioutil.ReadDir(l.Dir)
+	files, err := ioutil.ReadDir(l.dir)
 	if err != nil {
-		l.Errorf(context.Background(), "failed to read dir: %s: %s", l.Dir, err)
+		l.Errorf(context.Background(), "failed to read dir: %s: %s", l.dir, err)
 		return nil
 	}
 
@@ -172,7 +183,7 @@ func (l *CustomLogger) removableFiles() []FileInfo {
 			return nil
 		}
 		fis = append(fis, FileInfo{
-			l.Dir,
+			l.dir,
 			file.Name(),
 			file.Size(),
 			file.ModTime(),
@@ -184,7 +195,7 @@ func (l *CustomLogger) removableFiles() []FileInfo {
 
 func (l *CustomLogger) rotate() error {
 	now := time.Now()
-	path := filepath.Join(l.Dir, fmt.Sprintf("app_%s.log", now.In(time.UTC).Format(timeFormat)))
+	path := filepath.Join(l.dir, fmt.Sprintf("app_%s.log", now.In(time.UTC).Format(timeFormat)))
 	f, err := os.OpenFile(path, os.O_RDWR|os.O_APPEND|os.O_CREATE, 0666)
 	if err != nil {
 		return err
@@ -207,7 +218,7 @@ type logPayload struct {
 
 // FileInfo is a information of a log file.
 type FileInfo struct {
-	// Dir is a directory which the file is exist.
+	// dir is a directory which the file is exist.
 	Dir string
 	// Name is a base name.
 	Name string
@@ -222,4 +233,29 @@ type FileInfo struct {
 // Path returns a path to a log file.
 func (fi FileInfo) Path() string {
 	return filepath.Join(fi.Dir, fi.Name)
+}
+
+// CustomLoggerOption is a option of the CustomLogger.
+type CustomLoggerOption func(l *CustomLogger)
+
+// OutputTo specifies a log file directory.
+func OutputTo(dir string) CustomLoggerOption {
+	return func(l *CustomLogger) {
+		l.dir = dir
+	}
+}
+
+// OnUnexpectedError specifies a error handler that
+// is called when the logger could not output the log.
+func OnUnexpectedError(f func(err error, level LogLevel, format string, args ...interface{})) CustomLoggerOption {
+	return func(l *CustomLogger) {
+		l.onUnexpectedError = f
+	}
+}
+
+// RotatedBy specifies a rotation strategy.
+func RotatedBy(s RotationStrategy) CustomLoggerOption {
+	return func(l *CustomLogger) {
+		l.rotationStrategy = s
+	}
 }
