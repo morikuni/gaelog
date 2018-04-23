@@ -13,8 +13,8 @@ func runCustom(t *testing.T, name string, f func(t *testing.T, l *CustomLogger))
 	t.Run(name, func(t *testing.T) {
 		l := &CustomLogger{
 			Dir: "test",
-			OnUnexpectedError: func(err error) {
-				t.Fatal(err)
+			OnUnexpectedError: func(err error, l LogLevel, f string, args ...interface{}) {
+				t.Fatal(err, l, f, args)
 			},
 			RotationStrategy: NeverRotate{},
 		}
@@ -85,8 +85,8 @@ func TestCustomLogger(t *testing.T) {
 func BenchmarkCustomLogger(b *testing.B) {
 	l := &CustomLogger{
 		Dir: "log",
-		OnUnexpectedError: func(err error) {
-			b.Fatal(err)
+		OnUnexpectedError: func(err error, l LogLevel, f string, args ...interface{}) {
+			b.Fatal(err, l, f, args)
 		},
 		RotationStrategy: NeverRotate{},
 	}

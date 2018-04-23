@@ -27,7 +27,7 @@ type CustomLogger struct {
 	Dir string
 
 	// OnUnexpectedError is called when a logger cannot put the logs by some reason.
-	OnUnexpectedError func(err error)
+	OnUnexpectedError func(err error, level LogLevel, message string, args ...interface{})
 
 	// RotationStrategy is used to check whether logger should rotate
 	// the log file.
@@ -83,32 +83,41 @@ func (l *CustomLogger) Printf(_ context.Context, level LogLevel, format string, 
 	l.mu.Lock()
 	defer l.mu.Unlock()
 	l.init()
-	l.tryRotate()
+
+	if err := l.tryRotate(); err != nil {
+		l.recoverError(err, level, format, args)
+		return
+	}
 
 	if err := json.NewEncoder(l.file).Encode(&payload); err != nil {
-		l.recoverError(err)
+		l.recoverError(err, level, format, args)
 		return
 	}
 }
 
-func (l *CustomLogger) recoverError(err error) {
+func (l *CustomLogger) recoverError(err error, level LogLevel, format string, args ...interface{}) {
 	if l.OnUnexpectedError != nil {
-		l.OnUnexpectedError(err)
+		l.OnUnexpectedError(err, level, format, args...)
 	}
 }
 
-func (l *CustomLogger) tryRotate() {
-	stat, err := l.file.Stat()
-	if err != nil {
-		l.recoverError(err)
-		return
-	}
-	if l.RotationStrategy.ShouldRotate(FileInfo{l.Dir, stat.Name(), stat.Size(), stat.ModTime(), l.createdAt}) {
+func (l *CustomLogger) tryRotate() error {
+	if l.file != nil {
+		stat, err := l.file.Stat()
+		if err != nil {
+			return err
+		}
+		if l.RotationStrategy.ShouldRotate(FileInfo{l.Dir, stat.Name(), stat.Size(), stat.ModTime(), l.createdAt}) {
+			if err := l.rotate(); err != nil {
+				return err
+			}
+		}
+	} else {
 		if err := l.rotate(); err != nil {
-			l.recoverError(err)
-			return
+			return err
 		}
 	}
+	return nil
 }
 
 func (l *CustomLogger) init() {
@@ -118,12 +127,6 @@ func (l *CustomLogger) init() {
 		}
 		if l.RotationStrategy == nil {
 			l.RotationStrategy = TimeBaseRotation{24 * time.Hour}
-		}
-		if l.file == nil {
-			if err := l.rotate(); err != nil {
-				l.recoverError(err)
-				return
-			}
 		}
 	})
 }
