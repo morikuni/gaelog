@@ -37,7 +37,7 @@ func NewCustomLogger(opts ...CustomLoggerOption) *CustomLogger {
 	l := &CustomLogger{
 		dir:               "/var/log/app_engine/",
 		onUnexpectedError: handleError,
-		rotationStrategy:  TimeBaseRotation{24 * time.Hour},
+		rotationStrategy:  RotateEvery{24 * time.Hour},
 	}
 
 	for _, o := range opts {

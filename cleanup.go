@@ -12,31 +12,31 @@ type CleanupStrategy interface {
 	Apply(fis []FileInfo) ([]FileInfo, error)
 }
 
-// KeepLatest is a strategy that cleans up the files based on
+// RemoveCreatedBefore is a strategy that cleans up the files based on
 // the created time.
-type KeepLatest struct {
-	// Latest is a threshold. The files created before this duration
+type RemoveCreatedBefore struct {
+	// Duration is a threshold. The files created before this duration
 	// are removed.
-	Latest time.Duration
+	Duration time.Duration
 }
 
 // Apply implements CleanupStrategy.
-func (s KeepLatest) Apply(fis []FileInfo) ([]FileInfo, error) {
+func (s RemoveCreatedBefore) Apply(fis []FileInfo) ([]FileInfo, error) {
 	now := time.Now()
 	result := make([]FileInfo, 0, len(fis))
 	for _, fi := range fis {
-		if fi.CreatedAt.Before(now.Add(-s.Latest)) {
+		if fi.CreatedAt.Before(now.Add(-s.Duration)) {
 			result = append(result, fi)
 		}
 	}
 	return result, nil
 }
 
-// CleanUpAll is a strategy that cleans up all files.
-type CleanUpAll struct{}
+// RemoveAll is a strategy that cleans up all files.
+type RemoveAll struct{}
 
 // Apply implements CleanupStrategy.
-func (CleanUpAll) Apply(fis []FileInfo) ([]FileInfo, error) {
+func (RemoveAll) Apply(fis []FileInfo) ([]FileInfo, error) {
 	return fis, nil
 }
 

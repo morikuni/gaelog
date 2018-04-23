@@ -14,7 +14,7 @@ func TestCleanupStrategy(t *testing.T) {
 		Times []time.Time
 	}
 	type Expect struct {
-		KeepLatest int
+		RemoveCreatedBefore int
 	}
 	type Test struct {
 		Input  Input
@@ -73,8 +73,8 @@ func TestCleanupStrategy(t *testing.T) {
 
 	for i, test := range tests {
 		t.Run(fmt.Sprint(i), func(t *testing.T) {
-			ll := KeepLatest{latest}
-			ca := CleanUpAll{}
+			ll := RemoveCreatedBefore{latest}
+			ca := RemoveAll{}
 
 			var fis []FileInfo
 			for _, t := range test.Input.Times {
@@ -83,7 +83,7 @@ func TestCleanupStrategy(t *testing.T) {
 
 			result, err := ll.Apply(fis)
 			assert.NoError(t, err)
-			assert.Len(t, result, test.Expect.KeepLatest)
+			assert.Len(t, result, test.Expect.RemoveCreatedBefore)
 
 			result, err = ca.Apply(fis)
 			assert.NoError(t, err)
@@ -96,7 +96,7 @@ func TestScheduleCleanup(t *testing.T) {
 	runCustom(t, "success", func(t *testing.T, l *CustomLogger) {
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
-		go ScheduleCleanup(ctx, 2*time.Second, l, CleanUpAll{})
+		go ScheduleCleanup(ctx, 2*time.Second, l, RemoveAll{})
 		l.rotate()
 		time.Sleep(time.Second)
 		l.rotate()

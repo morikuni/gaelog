@@ -19,7 +19,7 @@ func runCustom(t *testing.T, name string, f func(t *testing.T, l *CustomLogger))
 			}),
 			RotatedBy(NeverRotate{}),
 		)
-		defer CleanUp(l, CleanUpAll{})
+		defer CleanUp(l, RemoveAll{})
 		defer l.Close()
 
 		f(t, l)
@@ -68,7 +68,7 @@ func TestCustomLogger(t *testing.T) {
 	})
 
 	runCustom(t, "RemovableFile", func(t *testing.T, l *CustomLogger) {
-		l.rotationStrategy = TimeBaseRotation{time.Second}
+		l.rotationStrategy = RotateEvery{time.Second}
 		l.Debugf(nil, "hello world")
 		assert.Len(t, l.removableFiles(), 0)
 		name := filepath.Base(l.file.Name())
@@ -91,7 +91,7 @@ func BenchmarkCustomLogger(b *testing.B) {
 		}),
 		RotatedBy(NeverRotate{}),
 	)
-	defer CleanUp(l, CleanUpAll{})
+	defer CleanUp(l, RemoveAll{})
 	defer l.Close()
 
 	for i := 0; i < b.N; i++ {

@@ -47,7 +47,7 @@ func TestRotationStrategy(t *testing.T) {
 
 	for i, test := range tests {
 		t.Run(fmt.Sprint(i), func(t *testing.T) {
-			tbr := TimeBaseRotation{maxAge}
+			tbr := RotateEvery{maxAge}
 			nr := NeverRotate{}
 
 			assert.Equal(t, test.Expect.TimeBaseRotation, tbr.ShouldRotate(test.Input.FileInfo))

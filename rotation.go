@@ -11,16 +11,16 @@ type RotationStrategy interface {
 	ShouldRotate(fi FileInfo) bool
 }
 
-// TimeBaseRotation rotates the file periodically.
-type TimeBaseRotation struct {
-	// MaxAge is a lifetime of the file.
-	MaxAge time.Duration
+// RotateEvery rotates the file periodically.
+type RotateEvery struct {
+	// Duration is a lifetime of one file.
+	Duration time.Duration
 }
 
 // ShouldRotate implements RotationStrategy
-func (s TimeBaseRotation) ShouldRotate(fi FileInfo) bool {
+func (s RotateEvery) ShouldRotate(fi FileInfo) bool {
 	now := time.Now()
-	if fi.CreatedAt.Before(now.Add(-s.MaxAge)) {
+	if fi.CreatedAt.Before(now.Add(-s.Duration)) {
 		return true
 	}
 	return false
