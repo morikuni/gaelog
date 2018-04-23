@@ -48,9 +48,9 @@ func NewCustomLogger(opts ...CustomLoggerOption) *CustomLogger {
 }
 
 func handleError(err error, level LogLevel, message string, args ...interface{}) {
-	const format = "unexpected error: %s: %s: %s: %v\n"
+	const format = "unexpected error: %s: %s: %s\n"
 
-	fmt.Fprintf(os.Stderr, format, err, level, message, args)
+	fmt.Fprintf(os.Stderr, format, err, level, fmt.Sprintf(message, args...))
 
 	f, err := os.OpenFile("error.log", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
 	if err != nil {
@@ -59,7 +59,7 @@ func handleError(err error, level LogLevel, message string, args ...interface{})
 	}
 	defer f.Close()
 
-	fmt.Fprintf(f, format, err, level, message, args)
+	fmt.Fprintf(f, format, err, level, fmt.Sprintf(message, args...))
 }
 
 // Criticalf implements Logger.
